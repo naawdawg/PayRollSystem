@@ -13,34 +13,28 @@ namespace PayRoll.Controllers
     public class ChangePasswordController : Controller
     {
         private PayrollDbContext db = new PayrollDbContext();
+		private string sessionEmployee = System.Web.HttpContext.Current.Session["EmployeeId"] as String;
 
-        // GET: ChangePassword
-        public ActionResult Index()
+		// GET: ChangePassword
+		[VerifyLogin]
+		public ActionResult Index()
 		{
-			//if (id == null)
-			//{
-			//	return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-			//}
-			Employee employee = db.Employees.Find("a00828729");
-			if (employee == null)
-			{
-				return HttpNotFound();
-			}
-			return View(employee);
+			return View();
 		}
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
+		[VerifyLogin]
 		public ActionResult Index(FormCollection forms)
 		{
 			string newPassword = forms["newPassword"];
 			string confirmPassword = forms["confirmPassword"];
-			Employee employee = db.Employees.Find("a00828729");
+			Employee employee = db.Employees.Find(sessionEmployee);
 			string originalPassword = employee.Password;
 			if (newPassword != confirmPassword)
 			{
 				ModelState.AddModelError("NewPassword", "Passwords do not match");
-				return View(employee);
+				return View();
 			}
 			try
 			{
@@ -52,10 +46,11 @@ namespace PayRoll.Controllers
 			{
 				ModelState.AddModelError("NewPassword", e.EntityValidationErrors.ElementAt(0).ValidationErrors.ElementAt(0).ErrorMessage);
 				employee.Password = originalPassword;
-				return View(employee);
+				return View();
 			}
 			return RedirectToAction("Success");
 		}
+		[VerifyLogin]
 		public ActionResult Success()
 		{
 			return View();

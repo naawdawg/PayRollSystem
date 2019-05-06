@@ -61,13 +61,14 @@ namespace PayRoll.Controllers
                 : message == ManageMessageId.Error ? "An error has occurred."
                 : message == ManageMessageId.AddEmailSuccess ? "Your Email number was added."
                 : message == ManageMessageId.RemoveEmailSuccess ? "Your Email number was removed."
-                : "";
+				: message == ManageMessageId.PunchSuccess ? "You have successfully punch in/out"
+				: "";
 
             var userId = User.Identity.GetUserId();
             var model = new IndexViewModel
             {
                 HasPassword = HasPassword(),
-                EmailNumber = await UserManager.GetPhoneNumberAsync(userId),
+				EmailNumber = await UserManager.GetPhoneNumberAsync(userId),
                 TwoFactor = await UserManager.GetTwoFactorEnabledAsync(userId),
                 Logins = await UserManager.GetLoginsAsync(userId),
                 BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(userId)
@@ -100,17 +101,17 @@ namespace PayRoll.Controllers
         }
 
         //
-        // GET: /Manage/AddEmailNumber
-        public ActionResult AddEmailNumber()
+        // GET: /Manage/AddPhoneNumber
+        public ActionResult AddPhoneNumber()
         {
             return View();
         }
 
         //
-        // POST: /Manage/AddEmailNumber
+        // POST: /Manage/AddPhoneNumber
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> AddEmailNumber(AddEmailNumberViewModel model)
+        public async Task<ActionResult> AddPhoneNumber(AddEmailNumberViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -127,7 +128,7 @@ namespace PayRoll.Controllers
                 };
                 await UserManager.SmsService.SendAsync(message);
             }
-            return RedirectToAction("VerifyEmailNumber", new { EmailNumber = model.Number });
+            return RedirectToAction("VerifyPhoneNumber", new { PhoneNumber = model.Number });
         }
 
         //
@@ -161,16 +162,16 @@ namespace PayRoll.Controllers
         }
 
         //
-        // GET: /Manage/VerifyEmailNumber
-        public async Task<ActionResult> VerifyEmailNumber(string EmailNumber)
+        // GET: /Manage/VerifyPhoneNumber
+        public async Task<ActionResult> VerifyPhoneNumber(string PhoneNumber)
         {
-            var code = await UserManager.GenerateChangePhoneNumberTokenAsync(User.Identity.GetUserId(), EmailNumber);
+            var code = await UserManager.GenerateChangePhoneNumberTokenAsync(User.Identity.GetUserId(), PhoneNumber);
             // Send an SMS through the SMS provider to verify the Email number
-            return EmailNumber == null ? View("Error") : View(new VerifyEmailNumberViewModel { EmailNumber = EmailNumber });
+            return PhoneNumber == null ? View("Error") : View(new VerifyEmailNumberViewModel { EmailNumber = PhoneNumber });
         }
 
         //
-        // POST: /Manage/VerifyEmailNumber
+        // POST: /Manage/VerifyPhoneNumber
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> VerifyEmailNumber(VerifyEmailNumberViewModel model)
@@ -195,10 +196,10 @@ namespace PayRoll.Controllers
         }
 
         //
-        // POST: /Manage/RemoveEmailNumber
+        // POST: /Manage/RemovePhoneNumber
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> RemoveEmailNumber()
+        public async Task<ActionResult> RemovePhoneNumber()
         {
             var result = await UserManager.SetPhoneNumberAsync(User.Identity.GetUserId(), null);
             if (!result.Succeeded)
@@ -333,7 +334,7 @@ namespace PayRoll.Controllers
             base.Dispose(disposing);
         }
 
-#region Helpers
+		#region Helpers
         // Used for XSRF protection when adding external logins
         private const string XsrfKey = "XsrfId";
 
@@ -363,7 +364,7 @@ namespace PayRoll.Controllers
             return false;
         }
 
-        private bool HasEmailNumber()
+        private bool HasPhoneNumber()
         {
             var user = UserManager.FindById(User.Identity.GetUserId());
             if (user != null)
@@ -381,9 +382,10 @@ namespace PayRoll.Controllers
             SetPasswordSuccess,
             RemoveLoginSuccess,
             RemoveEmailSuccess,
-            Error
+			PunchSuccess,
+			Error
         }
 
-#endregion
+		#endregion
     }
 }
